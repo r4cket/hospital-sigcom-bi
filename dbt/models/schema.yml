@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: mart_gasto_hospital
+    description: >
+      Gasto directo total del hospital por mes. Migracion a dbt del view
+      v_gasto_hospital: suma RH + GG + Insumos de los 36 centros de costo.
+      El costo indirecto NO se suma (es reasignacion interna entre centros,
+      no gasto nuevo). Sirve de plantilla para migrar el resto de las vistas.
+    columns:
+      - name: periodo
+        tests: [not_null, unique]
+      - name: costo_total
+        tests: [not_null]

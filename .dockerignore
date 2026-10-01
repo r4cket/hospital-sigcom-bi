@@ -1,0 +1,4 @@
+# El build solo necesita grafana/provisioning + el Dockerfile.
+*
+!Dockerfile
+!grafana/

@@ -1,0 +1,21 @@
+apiVersion: 1
+
+# Conexion a Postgres via variables de entorno. Cada despliegue las setea:
+#   - Neon (Render / HF Spaces):  PG_HOST=ep-xxx.neon.tech  PG_SSLMODE=require
+#   - docker-compose (VM):        PG_HOST=postgres          PG_SSLMODE=disable
+datasources:
+  - name: PostgreSQL Hospital
+    type: postgres
+    uid: postgres_hospital_bi
+    access: proxy
+    url: ${PG_HOST}:${PG_PORT}
+    database: ${PG_DATABASE}
+    user: ${PG_USER}
+    isDefault: true
+    editable: false
+    jsonData:
+      sslmode: ${PG_SSLMODE}
+      postgresVersion: 1600
+      timescaledb: false
+    secureJsonData:
+      password: ${PG_PASSWORD}

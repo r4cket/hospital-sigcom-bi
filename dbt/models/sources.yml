@@ -1,0 +1,47 @@
+version: 2
+
+sources:
+  - name: sigcom
+    description: "Tablas cargadas desde el Cubo 9 SIGCOM (Dashboard_SIGCOM.xlsx)."
+    schema: public
+    tables:
+      - name: centros_costo
+        columns:
+          - name: id
+            tests: [unique, not_null]
+          - name: codigo
+            tests: [unique, not_null]
+          - name: nombre
+            tests: [not_null]
+          - name: tipo
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ["hospitalizacion", "uti", "ambulatorio", "apoyo"]
+          - name: clasificacion
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ["Final", "Apoyo"]
+
+      - name: costos_mensuales
+        columns:
+          - name: centro_costo_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('sigcom', 'centros_costo')
+                  field: id
+          - name: periodo
+            tests: [not_null]
+
+      - name: produccion_mensual
+        columns:
+          - name: centro_costo_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('sigcom', 'centros_costo')
+                  field: id
+          - name: periodo
+            tests: [not_null]

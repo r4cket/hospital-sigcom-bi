@@ -1,0 +1,311 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "templating": {
+    "list": [
+      {
+        "name": "anio",
+        "label": "Año",
+        "type": "custom",
+        "query": "2024 : 2024, 2025 : 2025, 2026 : 2026",
+        "includeAll": true,
+        "allValue": null,
+        "multi": true,
+        "current": { "text": ["All"], "value": ["$__all"] },
+        "options": [
+          { "selected": true,  "text": "All",  "value": "$__all" },
+          { "selected": false, "text": "2024", "value": "2024" },
+          { "selected": false, "text": "2025", "value": "2025" },
+          { "selected": false, "text": "2026", "value": "2026" }
+        ]
+      },
+      {
+        "name": "mes",
+        "label": "Mes",
+        "type": "custom",
+        "query": "Enero : 1, Febrero : 2, Marzo : 3, Abril : 4, Mayo : 5, Junio : 6, Julio : 7, Agosto : 8, Septiembre : 9, Octubre : 10, Noviembre : 11, Diciembre : 12",
+        "includeAll": true,
+        "allValue": null,
+        "multi": true,
+        "current": { "text": ["All"], "value": ["$__all"] },
+        "options": [
+          { "selected": true,  "text": "All",        "value": "$__all" },
+          { "selected": false, "text": "Enero",      "value": "1" },
+          { "selected": false, "text": "Febrero",    "value": "2" },
+          { "selected": false, "text": "Marzo",      "value": "3" },
+          { "selected": false, "text": "Abril",      "value": "4" },
+          { "selected": false, "text": "Mayo",       "value": "5" },
+          { "selected": false, "text": "Junio",      "value": "6" },
+          { "selected": false, "text": "Julio",      "value": "7" },
+          { "selected": false, "text": "Agosto",     "value": "8" },
+          { "selected": false, "text": "Septiembre", "value": "9" },
+          { "selected": false, "text": "Octubre",    "value": "10" },
+          { "selected": false, "text": "Noviembre",  "value": "11" },
+          { "selected": false, "text": "Diciembre",  "value": "12" }
+        ]
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Costo unitario de hospitalización",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Costo promedio por egreso (CLP)",
+      "description": "Costo total ÷ egresos, por mes y centro de costo (6 hospitalización + UTI). La leyenda muestra el promedio del período filtrado. Datos reales Cubo 9 SIGCOM.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
+      "fieldConfig": { "defaults": { "unit": "locale", "decimals": 0, "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 8, "showPoints": "auto", "spanNulls": true } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "time_series", "rawQuery": true, "rawSql": "SELECT periodo AS \"time\", metric, costo_por_egreso AS value FROM v_costo_por_egreso WHERE tipo IN ('hospitalizacion','uti') AND costo_por_egreso IS NOT NULL AND EXTRACT(YEAR FROM periodo)::int::text IN (${anio:singlequote}) AND EXTRACT(MONTH FROM periodo)::int::text IN (${mes:singlequote}) ORDER BY periodo" } ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Costo promedio por día cama ocupado (CLP)",
+      "description": "Costo total ÷ días cama ocupados, por mes y centro de costo (6 hospitalización + UTI). La leyenda muestra el promedio del período filtrado. Datos reales Cubo 9 SIGCOM.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
+      "fieldConfig": { "defaults": { "unit": "locale", "decimals": 0, "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 8, "showPoints": "auto", "spanNulls": true } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "time_series", "rawQuery": true, "rawSql": "SELECT periodo AS \"time\", metric, costo_por_dco AS value FROM v_costo_por_dco WHERE tipo IN ('hospitalizacion','uti') AND costo_por_dco IS NOT NULL AND EXTRACT(YEAR FROM periodo)::int::text IN (${anio:singlequote}) AND EXTRACT(MONTH FROM periodo)::int::text IN (${mes:singlequote}) ORDER BY periodo" } ]
+    },
+    {
+      "id": 3,
+      "type": "table",
+      "title": "Resumen del período — costo promedio por centro de costo (SIGCOM)",
+      "description": "Costo promedio = Σ costo total ÷ Σ producción del período filtrado (año/mes). ALOS = Σ días cama ÷ Σ egresos. Solo centros con cama.",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 9 },
+      "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto", "filterable": true } },
+        "overrides": [
+          { "matcher": { "id": "byRegexp", "options": ".*\\(CLP\\)$" }, "properties": [ { "id": "unit", "value": "locale" }, { "id": "decimals", "value": 0 } ] },
+          { "matcher": { "id": "byName", "options": "Costo prom. x egreso (CLP)" }, "properties": [ { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "gradient" } } ] },
+          { "matcher": { "id": "byName", "options": "Costo prom. x día cama (CLP)" }, "properties": [ { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "gradient" } } ] },
+          { "matcher": { "id": "byName", "options": "ALOS (días)" }, "properties": [ { "id": "unit", "value": "none" }, { "id": "decimals", "value": 1 } ] }
+        ]
+      },
+      "options": { "showHeader": true, "cellHeight": "sm", "footer": { "show": true, "reducer": ["sum"], "fields": ["Egresos", "Días cama ocupados", "Costo total (CLP)"] }, "sortBy": [ { "displayName": "Costo prom. x egreso (CLP)", "desc": true } ] },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "table", "rawQuery": true, "rawSql": "SELECT cc.nombre AS \"Centro de costo\", SUM(pm.egresos) AS \"Egresos\", SUM(pm.dias_cama_ocupados) AS \"Días cama ocupados\", SUM(cm.costo_total) AS \"Costo total (CLP)\", ROUND(SUM(cm.costo_total) / NULLIF(SUM(pm.egresos),0), 0) AS \"Costo prom. x egreso (CLP)\", ROUND(SUM(cm.costo_total) / NULLIF(SUM(pm.dias_cama_ocupados),0), 0) AS \"Costo prom. x día cama (CLP)\", ROUND(SUM(pm.dias_cama_ocupados)::numeric / NULLIF(SUM(pm.egresos),0), 1) AS \"ALOS (días)\" FROM costos_mensuales cm JOIN produccion_mensual pm ON pm.centro_costo_id = cm.centro_costo_id AND pm.periodo = cm.periodo JOIN centros_costo cc ON cc.id = cm.centro_costo_id WHERE cc.tipo IN ('hospitalizacion','uti') AND EXTRACT(YEAR FROM cm.periodo)::int::text IN (${anio:singlequote}) AND EXTRACT(MONTH FROM cm.periodo)::int::text IN (${mes:singlequote}) GROUP BY cc.nombre ORDER BY \"Costo prom. x egreso (CLP)\" DESC" } ]
+    },
+    {
+      "id": 11,
+      "type": "row",
+      "title": "Gasto del hospital",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Gasto total del hospital por mes (CLP)",
+      "description": "Suma de los costos directos de los 36 centros de costo, apilado por componente (RH + GG + Insumos). Datos reales Cubo 9 SIGCOM.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
+      "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
+      "fieldConfig": { "defaults": { "unit": "locale", "custom": { "drawStyle": "bars", "fillOpacity": 75, "lineWidth": 1, "stacking": { "mode": "normal", "group": "A" } } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean"] }, "tooltip": { "mode": "multi", "sort": "none" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "time_series", "rawQuery": true, "rawSql": "SELECT g.periodo AS \"time\", v.metric, v.value FROM v_gasto_hospital g CROSS JOIN LATERAL (VALUES ('Recurso humano', g.recurso_humano), ('Gastos generales', g.gastos_generales), ('Insumos', g.insumos)) AS v(metric, value) WHERE EXTRACT(YEAR FROM g.periodo)::int::text IN (${anio:singlequote}) AND EXTRACT(MONTH FROM g.periodo)::int::text IN (${mes:singlequote}) ORDER BY g.periodo" } ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Composición del gasto (%)",
+      "description": "Peso de RH / GG / Insumos sobre el costo total del hospital (suman 100 %). Datos reales Cubo 9 SIGCOM.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
+      "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "custom": { "drawStyle": "line", "lineWidth": 1, "fillOpacity": 65, "stacking": { "mode": "normal", "group": "A" } } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "none" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "time_series", "rawQuery": true, "rawSql": "SELECT c.periodo AS \"time\", v.metric, v.value FROM v_composicion_gasto c CROSS JOIN LATERAL (VALUES ('Recurso humano', c.pct_recurso_humano), ('Gastos generales', c.pct_gastos_generales), ('Insumos', c.pct_insumos)) AS v(metric, value) WHERE EXTRACT(YEAR FROM c.periodo)::int::text IN (${anio:singlequote}) AND EXTRACT(MONTH FROM c.periodo)::int::text IN (${mes:singlequote}) ORDER BY c.periodo" } ]
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "Ranking de centros de costo — costo total del período filtrado",
+      "description": "Los 36 centros de costo por gasto del período (año/mes). El % se calcula solo sobre los centros finales (su suma = gasto total del hospital). Datos reales Cubo 9 SIGCOM.",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 27 },
+      "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto", "filterable": true } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Costo total período (CLP)" }, "properties": [ { "id": "unit", "value": "locale" }, { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "gradient" } } ] },
+          { "matcher": { "id": "byName", "options": "Promedio mensual (CLP)" }, "properties": [ { "id": "unit", "value": "locale" } ] },
+          { "matcher": { "id": "byName", "options": "% del gasto (finales)" }, "properties": [ { "id": "unit", "value": "percent" }, { "id": "decimals", "value": 2 } ] }
+        ]
+      },
+      "options": { "showHeader": true, "cellHeight": "sm", "sortBy": [ { "displayName": "Costo total período (CLP)", "desc": true } ] },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "table", "rawQuery": true, "rawSql": "SELECT cc.nombre AS \"Centro de costo\", cc.clasificacion AS \"Clase\", cc.tipo AS \"Tipo\", SUM(cm.costo_total) AS \"Costo total período (CLP)\", ROUND(AVG(cm.costo_total),0) AS \"Promedio mensual (CLP)\", CASE WHEN cc.clasificacion = 'Final' THEN ROUND(100 * SUM(cm.costo_total) / NULLIF(SUM(SUM(cm.costo_total)) FILTER (WHERE cc.clasificacion = 'Final') OVER (), 0), 2) END AS \"% del gasto (finales)\" FROM costos_mensuales cm JOIN centros_costo cc ON cc.id = cm.centro_costo_id WHERE EXTRACT(YEAR FROM cm.periodo)::int::text IN (${anio:singlequote}) AND EXTRACT(MONTH FROM cm.periodo)::int::text IN (${mes:singlequote}) GROUP BY cc.nombre, cc.clasificacion, cc.tipo ORDER BY \"Costo total período (CLP)\" DESC" } ]
+    },
+    {
+      "id": 12,
+      "type": "row",
+      "title": "Producción y ocupación hospitalaria",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 36 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Índice ocupacional de camas (%) por servicio",
+      "description": "Días cama ocupados ÷ (camas de dotación × días del mes). Sobre 100 % = la demanda supera la dotación asignada al servicio (pacientes en exceso / boarding) — es un hallazgo de asignación de camas, no un error de datos. Líneas guía: 85 % objetivo, 100 % capacidad.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 37 },
+      "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "decimals": 0,
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 8, "showPoints": "auto", "spanNulls": true, "thresholdsStyle": { "mode": "line" } },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 85 }, { "color": "red", "value": 100 } ] }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "time_series", "rawQuery": true, "rawSql": "SELECT periodo AS \"time\", metric, ocupacion_pct AS value FROM v_ocupacion_camas WHERE tipo IN ('hospitalizacion','uti') AND ocupacion_pct IS NOT NULL AND EXTRACT(YEAR FROM periodo)::int::text IN (${anio:singlequote}) AND EXTRACT(MONTH FROM periodo)::int::text IN (${mes:singlequote}) ORDER BY periodo" } ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "ALOS — estadía promedio (días) por servicio",
+      "description": "Días cama ocupados ÷ egresos, por mes y servicio. Datos reales Cubo 9 SIGCOM.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 37 },
+      "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 1, "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 8, "showPoints": "auto", "spanNulls": true } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "time_series", "rawQuery": true, "rawSql": "SELECT periodo AS \"time\", metric, alos AS value FROM v_alos WHERE tipo IN ('hospitalizacion','uti') AND alos IS NOT NULL AND EXTRACT(YEAR FROM periodo)::int::text IN (${anio:singlequote}) AND EXTRACT(MONTH FROM periodo)::int::text IN (${mes:singlequote}) ORDER BY periodo" } ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Producción hospitalaria — egresos y días cama ocupados (total)",
+      "description": "Suma de los 6 servicios de hospitalización + UTI por mes. Egresos en barras (eje izq.), días cama ocupados en línea (eje der.). Datos reales Cubo 9 SIGCOM.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 45 },
+      "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
+      "fieldConfig": {
+        "defaults": { "unit": "locale", "decimals": 0, "custom": { "drawStyle": "bars", "fillOpacity": 70, "lineWidth": 1 } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Días cama ocupados" }, "properties": [ { "id": "custom.drawStyle", "value": "line" }, { "id": "custom.lineWidth", "value": 2 }, { "id": "custom.fillOpacity", "value": 0 }, { "id": "custom.axisPlacement", "value": "right" } ] }
+        ]
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "none" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "time_series", "rawQuery": true, "rawSql": "SELECT p.periodo AS \"time\", v.metric, v.value FROM v_produccion_hospital p CROSS JOIN LATERAL (VALUES ('Egresos', p.egresos), ('Días cama ocupados', p.dias_cama_ocupados)) AS v(metric, value) WHERE EXTRACT(YEAR FROM p.periodo)::int::text IN (${anio:singlequote}) AND EXTRACT(MONTH FROM p.periodo)::int::text IN (${mes:singlequote}) ORDER BY p.periodo" } ]
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Giro cama mensual (egresos por cama) por servicio",
+      "description": "Egresos ÷ camas de dotación, por mes. Índice de rotación: cuántos pacientes distintos pasa cada cama al mes. Datos reales Cubo 9 SIGCOM.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 45 },
+      "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 1, "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 8, "showPoints": "auto", "spanNulls": true } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "time_series", "rawQuery": true, "rawSql": "SELECT periodo AS \"time\", metric, giro_cama AS value FROM v_ocupacion_camas WHERE tipo IN ('hospitalizacion','uti') AND giro_cama IS NOT NULL AND EXTRACT(YEAR FROM periodo)::int::text IN (${anio:singlequote}) AND EXTRACT(MONTH FROM periodo)::int::text IN (${mes:singlequote}) ORDER BY periodo" } ]
+    },
+    {
+      "id": 14,
+      "type": "row",
+      "title": "Estructura y eficiencia del costo",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 53 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 15,
+      "type": "barchart",
+      "title": "Estructura del costo por servicio (CLP) — período filtrado",
+      "description": "Composición del costo total de cada servicio de hospitalización: RH + GG + Insumos = costo directo; + Costo indirecto (apoyo re-asignado) = costo total. Datos reales Cubo 9 SIGCOM.",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 54 },
+      "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
+      "fieldConfig": { "defaults": { "unit": "locale", "decimals": 0, "custom": { "lineWidth": 1, "fillOpacity": 80, "axisLabel": "CLP" } }, "overrides": [] },
+      "options": { "orientation": "horizontal", "stacking": "normal", "showValue": "never", "legend": { "displayMode": "list", "placement": "bottom" }, "xTickLabelRotation": 0, "xTickLabelMaxLength": 20 },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "table", "rawQuery": true, "rawSql": "SELECT cc.nombre AS \"Servicio\", SUM(cm.recurso_humano) AS \"Recurso humano\", SUM(cm.gastos_generales) AS \"Gastos generales\", SUM(cm.insumos) AS \"Insumos\", SUM(cm.costo_indirecto) AS \"Costo indirecto\" FROM costos_mensuales cm JOIN centros_costo cc ON cc.id = cm.centro_costo_id WHERE cc.tipo IN ('hospitalizacion','uti') AND EXTRACT(YEAR FROM cm.periodo)::int::text IN (${anio:singlequote}) AND EXTRACT(MONTH FROM cm.periodo)::int::text IN (${mes:singlequote}) GROUP BY cc.nombre ORDER BY SUM(cm.costo_total) DESC" } ]
+    },
+    {
+      "id": 16,
+      "type": "barchart",
+      "title": "Carga de costo indirecto sobre el costo total (%) — período filtrado",
+      "description": "Parte del costo total de cada servicio que corresponde a centros de apoyo re-asignados (overhead SIGCOM = costo indirecto ÷ costo total). Datos reales Cubo 9 SIGCOM.",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 54 },
+      "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "decimals": 1,
+          "custom": { "lineWidth": 1, "fillOpacity": 80, "gradientMode": "hue" },
+          "color": { "mode": "continuous-GrYlRd" }
+        },
+        "overrides": []
+      },
+      "options": { "orientation": "horizontal", "showValue": "always", "legend": { "showLegend": false }, "xTickLabelMaxLength": 20 },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "table", "rawQuery": true, "rawSql": "SELECT cc.nombre AS \"Servicio\", ROUND(100.0 * SUM(cm.costo_indirecto) / NULLIF(SUM(cm.costo_total),0), 1) AS \"Costo indirecto %\" FROM costos_mensuales cm JOIN centros_costo cc ON cc.id = cm.centro_costo_id WHERE cc.tipo IN ('hospitalizacion','uti') AND EXTRACT(YEAR FROM cm.periodo)::int::text IN (${anio:singlequote}) AND EXTRACT(MONTH FROM cm.periodo)::int::text IN (${mes:singlequote}) GROUP BY cc.nombre ORDER BY 2 DESC" } ]
+    },
+    {
+      "id": 17,
+      "type": "barchart",
+      "title": "Costo promedio por egreso — comparación por año (Σ costo ÷ Σ egresos)",
+      "description": "Compara los 3 años para cada servicio. Ignora el filtro Año a propósito; sí respeta el filtro Mes (p. ej. Mes = Julio compara los julios). Concuerda con la hoja \"Comparación año a año\" del Excel.",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 63 },
+      "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
+      "fieldConfig": { "defaults": { "unit": "locale", "decimals": 0, "custom": { "lineWidth": 1, "fillOpacity": 85 } }, "overrides": [] },
+      "options": { "orientation": "vertical", "showValue": "auto", "groupWidth": 0.7, "barWidth": 0.9, "legend": { "displayMode": "list", "placement": "bottom" }, "xTickLabelRotation": -30, "xTickLabelMaxLength": 24 },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "table", "rawQuery": true, "rawSql": "SELECT cc.nombre AS \"Servicio\", ROUND(SUM(cm.costo_total) FILTER (WHERE EXTRACT(YEAR FROM cm.periodo)=2024) / NULLIF(SUM(pm.egresos) FILTER (WHERE EXTRACT(YEAR FROM cm.periodo)=2024),0), 0) AS \"2024\", ROUND(SUM(cm.costo_total) FILTER (WHERE EXTRACT(YEAR FROM cm.periodo)=2025) / NULLIF(SUM(pm.egresos) FILTER (WHERE EXTRACT(YEAR FROM cm.periodo)=2025),0), 0) AS \"2025\", ROUND(SUM(cm.costo_total) FILTER (WHERE EXTRACT(YEAR FROM cm.periodo)=2026) / NULLIF(SUM(pm.egresos) FILTER (WHERE EXTRACT(YEAR FROM cm.periodo)=2026),0), 0) AS \"2026\" FROM costos_mensuales cm JOIN produccion_mensual pm ON pm.centro_costo_id = cm.centro_costo_id AND pm.periodo = cm.periodo JOIN centros_costo cc ON cc.id = cm.centro_costo_id WHERE cc.tipo IN ('hospitalizacion','uti') AND EXTRACT(MONTH FROM cm.periodo)::int::text IN (${mes:singlequote}) GROUP BY cc.nombre ORDER BY cc.nombre" } ]
+    },
+    {
+      "id": 18,
+      "type": "row",
+      "title": "Control SIGCOM",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 72 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 19,
+      "type": "timeseries",
+      "title": "Centro de Costos Externo — costo directo mensual (CLP)",
+      "description": "En SIGCOM el Centro de Costos Externo sólo debiera RECIBIR prestaciones compradas a otros establecimientos, sin costo directo propio (RH / insumos). En 2024 = $0 (correcto); desde 2025 registra costo directo ($600 MM en 2025, $537 MM acumulado 2026). Revisar la imputación de este centro.",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 73 },
+      "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale", "decimals": 0,
+          "custom": { "drawStyle": "bars", "fillOpacity": 70, "lineWidth": 1, "thresholdsStyle": { "mode": "off" } },
+          "color": { "mode": "fixed", "fixedColor": "red" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["sum", "mean"] }, "tooltip": { "mode": "single", "sort": "none" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "time_series", "rawQuery": true, "rawSql": "SELECT cm.periodo AS \"time\", 'Costo directo — CC Externo' AS metric, cm.costo_directo AS value FROM costos_mensuales cm JOIN centros_costo cc ON cc.id = cm.centro_costo_id WHERE cc.nombre = 'CENTRO DE COSTOS EXTERNO' AND EXTRACT(YEAR FROM cm.periodo)::int::text IN (${anio:singlequote}) AND EXTRACT(MONTH FROM cm.periodo)::int::text IN (${mes:singlequote}) ORDER BY cm.periodo" } ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["hospital", "sigcom", "costos", "coronel"],
+  "time": { "from": "2024-01-01T00:00:00.000Z", "to": "2026-08-01T00:00:00.000Z" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "KPIs Financieros - Hospital San José de Coronel",
+  "uid": "hospital-financial-kpis",
+  "version": 8,
+  "weekStart": ""
+}

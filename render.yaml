@@ -1,0 +1,32 @@
+# Blueprint de Render. En render.com -> New -> Blueprint -> apuntar a este repo
+# y a la carpeta /deploy. Crea el servicio web gratis con Grafana.
+#
+# Los valores marcados sync:false hay que ponerlos a mano en el panel de Render
+# (Environment): la clave admin y los datos de conexion de Neon.
+services:
+  - type: web
+    name: hospital-bi-grafana
+    runtime: docker
+    plan: free
+    rootDir: deploy
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: GF_SERVER_HTTP_PORT
+        value: "10000"          # Render enruta al puerto $PORT (10000 por defecto)
+      - key: GF_SERVER_ROOT_URL
+        value: https://hospital-bi-grafana.onrender.com   # ajustar al nombre real
+      - key: GF_SECURITY_ADMIN_PASSWORD
+        sync: false
+      - key: PG_HOST
+        sync: false
+      - key: PG_PORT
+        value: "5432"
+      - key: PG_DATABASE
+        sync: false
+      - key: PG_USER
+        sync: false
+      - key: PG_PASSWORD
+        sync: false
+      - key: PG_SSLMODE
+        value: require

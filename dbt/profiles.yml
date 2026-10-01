@@ -1,0 +1,13 @@
+hospital_bi:
+  target: prod
+  outputs:
+    prod:
+      type: postgres
+      host: "{{ env_var('PG_HOST', 'postgres') }}"
+      port: "{{ env_var('PG_PORT', '5432') | int }}"
+      dbname: "{{ env_var('PG_DATABASE') }}"
+      user: "{{ env_var('PG_USER') }}"
+      password: "{{ env_var('PG_PASSWORD') }}"
+      sslmode: "{{ env_var('PG_SSLMODE', 'disable') }}"
+      schema: analytics
+      threads: 4

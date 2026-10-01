@@ -1,0 +1,6 @@
+# HTTPS automatico (Let's Encrypt) para la opcion VM. Solo necesita que el
+# dominio {$DOMAIN} apunte (registro A) a la IP publica de la VM.
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy grafana:3000
+}

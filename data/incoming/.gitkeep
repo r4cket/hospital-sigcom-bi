@@ -1,0 +1,2 @@
+# Deja aqui el Cubo 9 nuevo (Dashboard_SIGCOM*.xlsx). El servicio 'loader' lo
+# detecta, lo carga a Postgres y lo mueve a ../processed/ (o ../failed/).
