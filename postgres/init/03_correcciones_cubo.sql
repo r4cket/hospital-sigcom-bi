@@ -8,3 +8,10 @@ UPDATE costos_mensuales
 SET recurso_humano = 57960744, costo_indirecto = 32608604
 WHERE periodo = DATE '2026-01-01'
   AND centro_costo_id = (SELECT id FROM centros_costo WHERE codigo = 'HOSPITALIZACION_GINECOLOGIA');
+
+-- Marzo 2026, HOSPITALIZACION GINECOLOGIA: Recurso Humano 81.061.983 e Indirectos 46.211.729
+-- (Gastos Generales, Insumos, egresos y dias cama no cambian). Total general 161.091.889.
+UPDATE costos_mensuales
+SET recurso_humano = 81061983, costo_indirecto = 46211729
+WHERE periodo = DATE '2026-03-01'
+  AND centro_costo_id = (SELECT id FROM centros_costo WHERE codigo = 'HOSPITALIZACION_GINECOLOGIA');
