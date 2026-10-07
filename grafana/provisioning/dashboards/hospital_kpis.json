@@ -59,21 +59,6 @@
           { "selected": false, "text": "Noviembre",  "value": "11" },
           { "selected": false, "text": "Diciembre",  "value": "12" }
         ]
-      },
-      {
-        "name": "suav",
-        "label": "Suavizado (costo unitario)",
-        "description": "Solo afecta los 2 gráficos de costo unitario de arriba. El promedio móvil pondera por volumen (Σ costo ÷ Σ egresos o días cama de los últimos N meses); no modifica los datos.",
-        "type": "custom",
-        "query": "Mensual (sin suavizar) : 0, Promedio móvil 3 meses : 2, Promedio móvil 6 meses : 5",
-        "includeAll": false,
-        "multi": false,
-        "current": { "text": "Promedio móvil 6 meses", "value": "5" },
-        "options": [
-          { "selected": false, "text": "Mensual (sin suavizar)", "value": "0" },
-          { "selected": false, "text": "Promedio móvil 3 meses", "value": "2" },
-          { "selected": true,  "text": "Promedio móvil 6 meses", "value": "5" }
-        ]
       }
     ]
   },
@@ -89,24 +74,24 @@
     {
       "id": 1,
       "type": "timeseries",
-      "title": "Costo promedio por egreso (CLP) · ${suav:text}",
-      "description": "Costo total ÷ egresos, por centro de costo (6 hospitalización + UTI). Los servicios con pocos egresos (p. ej. Ginecología, 13-46 al mes) tienen costo fijo repartido en pocos casos, por eso el valor mensual da picos; el promedio móvil (selector «Suavizado») acumula costo y egresos de los últimos N meses para mostrar el nivel típico. Elige «Mensual» para ver el dato sin suavizar. Datos reales Cubo 9 SIGCOM.",
+      "title": "Costo promedio por egreso (CLP)",
+      "description": "Costo total ÷ egresos, por mes y centro de costo (6 hospitalización + UTI). La leyenda muestra el promedio del período filtrado. Datos reales Cubo 9 SIGCOM.",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
       "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
       "fieldConfig": { "defaults": { "unit": "locale", "decimals": 0, "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 8, "showPoints": "auto", "spanNulls": true } }, "overrides": [] },
       "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
-      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "time_series", "rawQuery": true, "rawSql": "WITH base AS (SELECT cc.nombre AS metric, cm.periodo, cm.costo_total AS num, pm.egresos AS den FROM costos_mensuales cm JOIN produccion_mensual pm ON pm.centro_costo_id = cm.centro_costo_id AND pm.periodo = cm.periodo JOIN centros_costo cc ON cc.id = cm.centro_costo_id WHERE cc.tipo IN ('hospitalizacion','uti')), w AS (SELECT metric, periodo, SUM(num) OVER ventana AS n, SUM(den) OVER ventana AS d FROM base WINDOW ventana AS (PARTITION BY metric ORDER BY periodo RANGE BETWEEN INTERVAL '${suav:raw} months' PRECEDING AND CURRENT ROW)) SELECT periodo AS \"time\", metric, ROUND(n / NULLIF(d, 0), 0) AS value FROM w WHERE d > 0 AND EXTRACT(YEAR FROM periodo)::int::text IN (${anio:singlequote}) AND EXTRACT(MONTH FROM periodo)::int::text IN (${mes:singlequote}) ORDER BY periodo" } ]
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "time_series", "rawQuery": true, "rawSql": "SELECT periodo AS \"time\", metric, costo_por_egreso AS value FROM v_costo_por_egreso WHERE tipo IN ('hospitalizacion','uti') AND costo_por_egreso IS NOT NULL AND EXTRACT(YEAR FROM periodo)::int::text IN (${anio:singlequote}) AND EXTRACT(MONTH FROM periodo)::int::text IN (${mes:singlequote}) ORDER BY periodo" } ]
     },
     {
       "id": 2,
       "type": "timeseries",
-      "title": "Costo promedio por día cama ocupado (CLP) · ${suav:text}",
-      "description": "Costo total ÷ días cama ocupados, por centro de costo (6 hospitalización + UTI). Los meses con pocos días cama dan picos porque el costo es en buena parte fijo; el promedio móvil (selector «Suavizado») acumula costo y días cama de los últimos N meses para mostrar el nivel típico. Elige «Mensual» para ver el dato sin suavizar. Datos reales Cubo 9 SIGCOM.",
+      "title": "Costo promedio por día cama ocupado (CLP)",
+      "description": "Costo total ÷ días cama ocupados, por mes y centro de costo (6 hospitalización + UTI). La leyenda muestra el promedio del período filtrado. Datos reales Cubo 9 SIGCOM.",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
       "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
       "fieldConfig": { "defaults": { "unit": "locale", "decimals": 0, "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 8, "showPoints": "auto", "spanNulls": true } }, "overrides": [] },
       "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
-      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "time_series", "rawQuery": true, "rawSql": "WITH base AS (SELECT cc.nombre AS metric, cm.periodo, cm.costo_total AS num, pm.dias_cama_ocupados AS den FROM costos_mensuales cm JOIN produccion_mensual pm ON pm.centro_costo_id = cm.centro_costo_id AND pm.periodo = cm.periodo JOIN centros_costo cc ON cc.id = cm.centro_costo_id WHERE cc.tipo IN ('hospitalizacion','uti')), w AS (SELECT metric, periodo, SUM(num) OVER ventana AS n, SUM(den) OVER ventana AS d FROM base WINDOW ventana AS (PARTITION BY metric ORDER BY periodo RANGE BETWEEN INTERVAL '${suav:raw} months' PRECEDING AND CURRENT ROW)) SELECT periodo AS \"time\", metric, ROUND(n / NULLIF(d, 0), 0) AS value FROM w WHERE d > 0 AND EXTRACT(YEAR FROM periodo)::int::text IN (${anio:singlequote}) AND EXTRACT(MONTH FROM periodo)::int::text IN (${mes:singlequote}) ORDER BY periodo" } ]
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "time_series", "rawQuery": true, "rawSql": "SELECT periodo AS \"time\", metric, costo_por_dco AS value FROM v_costo_por_dco WHERE tipo IN ('hospitalizacion','uti') AND costo_por_dco IS NOT NULL AND EXTRACT(YEAR FROM periodo)::int::text IN (${anio:singlequote}) AND EXTRACT(MONTH FROM periodo)::int::text IN (${mes:singlequote}) ORDER BY periodo" } ]
     },
     {
       "id": 3,
