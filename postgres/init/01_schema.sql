@@ -1,5 +1,5 @@
 -- ============================================================================
---  Esquema para DATOS REALES del Cubo 9 SIGCOM (Dashboard_SIGCOM.xlsx)
+--  Esquema para los datos del Cubo 9 SIGCOM (Dashboard_SIGCOM.xlsx)
 --  Hospital San Jose de Coronel  -  36 centros de costo, ene-2024 a jul-2026
 --
 --  Misma logica de costos del Cubo 9:
