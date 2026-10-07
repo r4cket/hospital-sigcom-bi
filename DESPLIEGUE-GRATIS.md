@@ -39,8 +39,6 @@ La única credencial que da control total es `GF_SECURITY_ADMIN_PASSWORD`.
    contenido de:
    - `deploy/postgres/init/01_schema.sql`
    - `deploy/postgres/init/02_data.sql`
-   - `deploy/postgres/init/03_correcciones.sql` (correcciones del hospital al
-     costo unitario; ejecutar siempre después de 01 y 02)
    (copia-pega cada archivo completo y *Run*. El 02 es largo pero corre en
    segundos.)
 5. Verifica con:

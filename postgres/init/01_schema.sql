@@ -9,11 +9,11 @@
 --  Reemplaza por completo el esquema con datos de ejemplo.
 -- ============================================================================
 
-DROP VIEW  IF EXISTS v_costo_por_egreso, v_costo_por_dco, v_produccion_efectiva, v_alos,
+DROP VIEW  IF EXISTS v_costo_por_egreso, v_costo_por_dco, v_alos,
                      v_ejecucion_presupuestaria, v_eficiencia_facturacion,
                      v_gasto_hospital, v_composicion_gasto, v_ranking_cc CASCADE;
-DROP TABLE IF EXISTS correccion_costo_unitario, costos_mensuales, produccion_mensual,
-                     presupuesto_mensual, facturacion_mensual, centros_costo CASCADE;
+DROP TABLE IF EXISTS costos_mensuales, produccion_mensual, presupuesto_mensual,
+                     facturacion_mensual, centros_costo CASCADE;
 
 CREATE TABLE centros_costo (
     id            SERIAL PRIMARY KEY,
@@ -48,51 +48,23 @@ CREATE TABLE produccion_mensual (
     UNIQUE (centro_costo_id, periodo)
 );
 
--- Correcciones del hospital al costo unitario mensual (difieren del Cubo 9).
--- Si hay fila para (centro de costo, periodo), las vistas de abajo muestran este
--- valor en vez de costo_total / egresos (o / dias cama). Se cargan en 03_correcciones.sql,
--- aparte de los datos del Cubo, para que recargar un Excel nuevo no las pise.
-CREATE TABLE correccion_costo_unitario (
-    centro_costo_id   INTEGER NOT NULL REFERENCES centros_costo(id),
-    periodo           DATE NOT NULL,
-    costo_por_egreso  NUMERIC(16,2),
-    costo_por_dco     NUMERIC(16,2),
-    nota              TEXT,
-    PRIMARY KEY (centro_costo_id, periodo)
-);
-
 -- ---- Vistas de KPI (las consulta Grafana) --------------------------------
 
 -- Paneles 1-3: KPI de hospitalizacion. Se filtran por tipo en el panel
 -- (solo 'hospitalizacion' y 'uti' tienen egresos + dias cama con sentido).
 CREATE VIEW v_costo_por_egreso AS
 SELECT cc.nombre AS metric, cc.tipo, cm.periodo,
-       COALESCE(k.costo_por_egreso,
-                CASE WHEN pm.egresos > 0 THEN ROUND(cm.costo_total / pm.egresos, 0) END) AS costo_por_egreso
+       CASE WHEN pm.egresos > 0 THEN ROUND(cm.costo_total / pm.egresos, 0) END AS costo_por_egreso
 FROM costos_mensuales cm
 JOIN produccion_mensual pm ON pm.centro_costo_id = cm.centro_costo_id AND pm.periodo = cm.periodo
-JOIN centros_costo cc ON cc.id = cm.centro_costo_id
-LEFT JOIN correccion_costo_unitario k ON k.centro_costo_id = cm.centro_costo_id AND k.periodo = cm.periodo;
+JOIN centros_costo cc ON cc.id = cm.centro_costo_id;
 
 CREATE VIEW v_costo_por_dco AS
 SELECT cc.nombre AS metric, cc.tipo, cm.periodo,
-       COALESCE(k.costo_por_dco,
-                CASE WHEN pm.dias_cama_ocupados > 0 THEN ROUND(cm.costo_total / pm.dias_cama_ocupados, 0) END) AS costo_por_dco
+       CASE WHEN pm.dias_cama_ocupados > 0 THEN ROUND(cm.costo_total / pm.dias_cama_ocupados, 0) END AS costo_por_dco
 FROM costos_mensuales cm
 JOIN produccion_mensual pm ON pm.centro_costo_id = cm.centro_costo_id AND pm.periodo = cm.periodo
-JOIN centros_costo cc ON cc.id = cm.centro_costo_id
-LEFT JOIN correccion_costo_unitario k ON k.centro_costo_id = cm.centro_costo_id AND k.periodo = cm.periodo;
-
--- Egresos / dias cama "efectivos": los del Cubo, salvo en los meses con correccion, donde son
--- costo_total / costo unitario corregido. Los usan las tablas que agregan (Σ costo ÷ Σ egresos)
--- para que coincidan con las vistas mensuales de arriba.
-CREATE VIEW v_produccion_efectiva AS
-SELECT pm.centro_costo_id, pm.periodo, pm.egresos, pm.dias_cama_ocupados,
-       CASE WHEN k.costo_por_egreso > 0 THEN cm.costo_total / k.costo_por_egreso ELSE pm.egresos END AS egresos_ef,
-       CASE WHEN k.costo_por_dco > 0 THEN cm.costo_total / k.costo_por_dco ELSE pm.dias_cama_ocupados END AS dco_ef
-FROM produccion_mensual pm
-JOIN costos_mensuales cm ON cm.centro_costo_id = pm.centro_costo_id AND cm.periodo = pm.periodo
-LEFT JOIN correccion_costo_unitario k ON k.centro_costo_id = pm.centro_costo_id AND k.periodo = pm.periodo;
+JOIN centros_costo cc ON cc.id = cm.centro_costo_id;
 
 CREATE VIEW v_alos AS
 SELECT cc.nombre AS metric, cc.tipo, pm.periodo,
