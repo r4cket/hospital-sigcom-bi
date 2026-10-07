@@ -66,7 +66,7 @@
     {
       "id": 10,
       "type": "row",
-      "title": "Costo unitario de hospitalización · Ginecología ene y mar 2026: ajustes del hospital, difieren del Cubo 9 SIGCOM.",
+      "title": "Costo unitario de hospitalización · Ginecología ene y mar 2026: valores ajustados manualmente, difieren del Cubo 9 SIGCOM.",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
       "collapsed": false,
       "panels": []
