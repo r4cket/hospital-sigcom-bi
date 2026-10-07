@@ -75,7 +75,7 @@
       "id": 1,
       "type": "timeseries",
       "title": "Costo promedio por egreso (CLP)",
-      "description": "Costo total ÷ egresos, por mes y centro de costo (6 hospitalización + UTI). La leyenda muestra el promedio del período filtrado. Datos reales Cubo 9 SIGCOM.",
+      "description": "Costo total ÷ egresos, por mes y centro de costo (6 hospitalización + UTI). La leyenda muestra el promedio del período filtrado. Datos reales Cubo 9 SIGCOM. Ginecología, ene y mar 2026: valores corregidos por el hospital (difieren del Cubo 9).",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
       "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
       "fieldConfig": { "defaults": { "unit": "locale", "decimals": 0, "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 8, "showPoints": "auto", "spanNulls": true } }, "overrides": [] },
@@ -86,7 +86,7 @@
       "id": 2,
       "type": "timeseries",
       "title": "Costo promedio por día cama ocupado (CLP)",
-      "description": "Costo total ÷ días cama ocupados, por mes y centro de costo (6 hospitalización + UTI). La leyenda muestra el promedio del período filtrado. Datos reales Cubo 9 SIGCOM.",
+      "description": "Costo total ÷ días cama ocupados, por mes y centro de costo (6 hospitalización + UTI). La leyenda muestra el promedio del período filtrado. Datos reales Cubo 9 SIGCOM. Ginecología, ene y mar 2026: valores corregidos por el hospital (difieren del Cubo 9).",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
       "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
       "fieldConfig": { "defaults": { "unit": "locale", "decimals": 0, "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 8, "showPoints": "auto", "spanNulls": true } }, "overrides": [] },
@@ -97,7 +97,7 @@
       "id": 3,
       "type": "table",
       "title": "Resumen del período — costo promedio por centro de costo (SIGCOM)",
-      "description": "Costo promedio = Σ costo total ÷ Σ producción del período filtrado (año/mes). ALOS = Σ días cama ÷ Σ egresos. Solo centros con cama.",
+      "description": "Costo promedio = Σ costo total ÷ Σ producción del período filtrado (año/mes). ALOS = Σ días cama ÷ Σ egresos. Solo centros con cama. Las columnas de costo promedio incluyen la corrección de Ginecología (ene y mar 2026); Egresos, Días cama y ALOS muestran el Cubo 9.",
       "gridPos": { "h": 9, "w": 24, "x": 0, "y": 9 },
       "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
       "fieldConfig": {
@@ -110,7 +110,7 @@
         ]
       },
       "options": { "showHeader": true, "cellHeight": "sm", "footer": { "show": true, "reducer": ["sum"], "fields": ["Egresos", "Días cama ocupados", "Costo total (CLP)"] }, "sortBy": [ { "displayName": "Costo prom. x egreso (CLP)", "desc": true } ] },
-      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "table", "rawQuery": true, "rawSql": "SELECT cc.nombre AS \"Centro de costo\", SUM(pm.egresos) AS \"Egresos\", SUM(pm.dias_cama_ocupados) AS \"Días cama ocupados\", SUM(cm.costo_total) AS \"Costo total (CLP)\", ROUND(SUM(cm.costo_total) / NULLIF(SUM(pm.egresos),0), 0) AS \"Costo prom. x egreso (CLP)\", ROUND(SUM(cm.costo_total) / NULLIF(SUM(pm.dias_cama_ocupados),0), 0) AS \"Costo prom. x día cama (CLP)\", ROUND(SUM(pm.dias_cama_ocupados)::numeric / NULLIF(SUM(pm.egresos),0), 1) AS \"ALOS (días)\" FROM costos_mensuales cm JOIN produccion_mensual pm ON pm.centro_costo_id = cm.centro_costo_id AND pm.periodo = cm.periodo JOIN centros_costo cc ON cc.id = cm.centro_costo_id WHERE cc.tipo IN ('hospitalizacion','uti') AND EXTRACT(YEAR FROM cm.periodo)::int::text IN (${anio:singlequote}) AND EXTRACT(MONTH FROM cm.periodo)::int::text IN (${mes:singlequote}) GROUP BY cc.nombre ORDER BY \"Costo prom. x egreso (CLP)\" DESC" } ]
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "table", "rawQuery": true, "rawSql": "SELECT cc.nombre AS \"Centro de costo\", SUM(pm.egresos) AS \"Egresos\", SUM(pm.dias_cama_ocupados) AS \"Días cama ocupados\", SUM(cm.costo_total) AS \"Costo total (CLP)\", ROUND(SUM(cm.costo_total) / NULLIF(SUM(pe.egresos_ef),0), 0) AS \"Costo prom. x egreso (CLP)\", ROUND(SUM(cm.costo_total) / NULLIF(SUM(pe.dco_ef),0), 0) AS \"Costo prom. x día cama (CLP)\", ROUND(SUM(pm.dias_cama_ocupados)::numeric / NULLIF(SUM(pm.egresos),0), 1) AS \"ALOS (días)\" FROM costos_mensuales cm JOIN produccion_mensual pm ON pm.centro_costo_id = cm.centro_costo_id AND pm.periodo = cm.periodo JOIN centros_costo cc ON cc.id = cm.centro_costo_id JOIN v_produccion_efectiva pe ON pe.centro_costo_id = cm.centro_costo_id AND pe.periodo = cm.periodo WHERE cc.tipo IN ('hospitalizacion','uti') AND EXTRACT(YEAR FROM cm.periodo)::int::text IN (${anio:singlequote}) AND EXTRACT(MONTH FROM cm.periodo)::int::text IN (${mes:singlequote}) GROUP BY cc.nombre ORDER BY \"Costo prom. x egreso (CLP)\" DESC" } ]
     },
     {
       "id": 11,
@@ -265,12 +265,12 @@
       "id": 17,
       "type": "barchart",
       "title": "Costo promedio por egreso — comparación por año (Σ costo ÷ Σ egresos)",
-      "description": "Compara los 3 años para cada servicio. Ignora el filtro Año a propósito; sí respeta el filtro Mes (p. ej. Mes = Julio compara los julios). Concuerda con la hoja \"Comparación año a año\" del Excel.",
+      "description": "Compara los 3 años para cada servicio. Ignora el filtro Año a propósito; sí respeta el filtro Mes (p. ej. Mes = Julio compara los julios). Concuerda con la hoja \"Comparación año a año\" del Excel, salvo Ginecología 2026 (ene y mar corregidos por el hospital).",
       "gridPos": { "h": 9, "w": 24, "x": 0, "y": 63 },
       "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" },
       "fieldConfig": { "defaults": { "unit": "locale", "decimals": 0, "custom": { "lineWidth": 1, "fillOpacity": 85 } }, "overrides": [] },
       "options": { "orientation": "vertical", "showValue": "auto", "groupWidth": 0.7, "barWidth": 0.9, "legend": { "displayMode": "list", "placement": "bottom" }, "xTickLabelRotation": -30, "xTickLabelMaxLength": 24 },
-      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "table", "rawQuery": true, "rawSql": "SELECT cc.nombre AS \"Servicio\", ROUND(SUM(cm.costo_total) FILTER (WHERE EXTRACT(YEAR FROM cm.periodo)=2024) / NULLIF(SUM(pm.egresos) FILTER (WHERE EXTRACT(YEAR FROM cm.periodo)=2024),0), 0) AS \"2024\", ROUND(SUM(cm.costo_total) FILTER (WHERE EXTRACT(YEAR FROM cm.periodo)=2025) / NULLIF(SUM(pm.egresos) FILTER (WHERE EXTRACT(YEAR FROM cm.periodo)=2025),0), 0) AS \"2025\", ROUND(SUM(cm.costo_total) FILTER (WHERE EXTRACT(YEAR FROM cm.periodo)=2026) / NULLIF(SUM(pm.egresos) FILTER (WHERE EXTRACT(YEAR FROM cm.periodo)=2026),0), 0) AS \"2026\" FROM costos_mensuales cm JOIN produccion_mensual pm ON pm.centro_costo_id = cm.centro_costo_id AND pm.periodo = cm.periodo JOIN centros_costo cc ON cc.id = cm.centro_costo_id WHERE cc.tipo IN ('hospitalizacion','uti') AND EXTRACT(MONTH FROM cm.periodo)::int::text IN (${mes:singlequote}) GROUP BY cc.nombre ORDER BY cc.nombre" } ]
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "postgres_hospital_bi" }, "format": "table", "rawQuery": true, "rawSql": "SELECT cc.nombre AS \"Servicio\", ROUND(SUM(cm.costo_total) FILTER (WHERE EXTRACT(YEAR FROM cm.periodo)=2024) / NULLIF(SUM(pe.egresos_ef) FILTER (WHERE EXTRACT(YEAR FROM cm.periodo)=2024),0), 0) AS \"2024\", ROUND(SUM(cm.costo_total) FILTER (WHERE EXTRACT(YEAR FROM cm.periodo)=2025) / NULLIF(SUM(pe.egresos_ef) FILTER (WHERE EXTRACT(YEAR FROM cm.periodo)=2025),0), 0) AS \"2025\", ROUND(SUM(cm.costo_total) FILTER (WHERE EXTRACT(YEAR FROM cm.periodo)=2026) / NULLIF(SUM(pe.egresos_ef) FILTER (WHERE EXTRACT(YEAR FROM cm.periodo)=2026),0), 0) AS \"2026\" FROM costos_mensuales cm JOIN produccion_mensual pm ON pm.centro_costo_id = cm.centro_costo_id AND pm.periodo = cm.periodo JOIN centros_costo cc ON cc.id = cm.centro_costo_id JOIN v_produccion_efectiva pe ON pe.centro_costo_id = cm.centro_costo_id AND pe.periodo = cm.periodo WHERE cc.tipo IN ('hospitalizacion','uti') AND EXTRACT(MONTH FROM cm.periodo)::int::text IN (${mes:singlequote}) GROUP BY cc.nombre ORDER BY cc.nombre" } ]
     },
     {
       "id": 18,
